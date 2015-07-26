@@ -1,47 +1,50 @@
-# This is the server logic for a Shiny web application.
-# You can find out more about building applications with Shiny here:
-#
-# http://shiny.rstudio.com
-#
-
 library(shiny)
-library(datasets)
 
-shinyServer(function(input, output) {
+shinyUI(fluidPage(
         
-        my_data <- mtcars
-        my_data$am <- factor(my_data$am, labels = c("Automatic", "Manual"))
-        my_data$cyl<-as.factor(my_data$cyl); my_data$vs<-as.factor(my_data$vs)
-        my_data$gear<-as.factor(my_data$gear); my_data$carb<-as.factor(my_data$carb)
+        # Title
+        titlePanel("mtcars Variables Relationship with 'mpg'"),
         
-        # First Plot
-        formulaText <- reactive({
-                paste("mpg ~", input$variable)
-        })
-        
-        output$my_boxplot <- renderPlot({
-                boxplot(as.formula(formulaText()), 
-                        data = my_data,
-                        outline = input$outliers)
-        })
-        
-        # Second Plot
-        formulaTextPoint <- reactive({
-                paste("mpg ~", "as.integer(", input$variable, ")")
-        })
-        
-        fit <- reactive({
-                lm(as.formula(formulaTextPoint()), data=my_data)
-        })
-        
-        output$my_regression <- renderPlot({
-                with(my_data, {
-                        plot(as.formula(formulaTextPoint()))
-                        abline(fit(), col=2)
-                })
-        })
-        
-        output$my_fit <- renderPrint({
-                summary(fit())
-        })
-})
+        # Sidebar
+        sidebarLayout(
+                sidebarPanel(
+                        h2("Instructions"),
+                        p("The application will show the box plot and the graph of the linear model
+                        of the selected variable and the 'miles per gallon' variable (mpg)"),
+                        br(),
+                        p("If the outlaiers check is clicked it will show the plots including them."),
+                        br(),
+                        p("You can also take a look at the linear model info on the Data Tab."),
+                        br(),
+                        selectInput("variable", "Variable:",
+                                    c("#cylinders" = "cyl",
+                                      "Displacement" = "disp",
+                                      "Gross horsepower" = "hp",
+                                      "Rear axle ratio" = "drat",
+                                      "Weight" = "wt",
+                                      "1/4 mile time" = "qsec",
+                                      "V/S" = "vs",
+                                      "Transmission" = "am",
+                                      "#gears" = "gear",
+                                      "#carburetors" = "carb"
+                                    )),
+                        checkboxInput("outliers", "Show Outliers", FALSE)    
+                ),
+                
+                # Show two plots and summary data
+                mainPanel(
+                        tabsetPanel(type = "tabs", 
+                                    tabPanel('Graphics',
+                                             h2('Boxplot'),
+                                             plotOutput("my_boxplot"),
+                                             h2('Linear Model'),
+                                             plotOutput("my_regression")
+                                    ),
+                                    tabPanel('Data',
+                                             h2('Linear Model Summary'),
+                                             verbatimTextOutput("my_fit")
+                                    )
+                        )
+                )  
+        )
+))
